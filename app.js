@@ -22,9 +22,9 @@ document.querySelectorAll('.no').forEach(b=>b.addEventListener('click',()=>{
 const env=$('#env');let opened=false;
 env.addEventListener('click',()=>{
   if(opened)return;opened=true;env.classList.add('open');
-  setTimeout(()=>env.classList.add('leave'),2000);
-  setTimeout(()=>go('greet'),2500);
-  setTimeout(()=>go('q1'),4700);
+  setTimeout(()=>env.classList.add('leave'),1300);
+  setTimeout(()=>go('greet'),1500);
+  setTimeout(()=>go('q1'),3600);
 });
 
 const lf=$('#lf'),lh=$('#lh'),lbar=lf.parentElement;
@@ -53,7 +53,7 @@ for(let d=1;d<=30;d++){
   grid.appendChild(e);
 }
 
-const MIN=8,SPAN=16,line=$('#line'),m24=$('#m24'),tf=$('#tf'),tl=$('#tl'),h10=$('#h10'),ticks=$('#ticks');
+const MIN=8,SPAN=16,line=$('#line'),m24=$('#m24'),m10=$('#m10'),tf=$('#tf'),tl=$('#tl'),ticks=$('#ticks');
 let end=24,val=24,drag=false,W=0,raf=0,rect=null;
 const frag=document.createDocumentFragment();
 for(let h=8;h<=24;h++){
@@ -88,8 +88,7 @@ function release(){
   end=Math.round(val);val=end;line.classList.add('snap');queue();
 }
 m24.addEventListener('pointerup',release);m24.addEventListener('pointercancel',release);
-const fade=()=>h10.classList.add('gone');
-$('#m10').addEventListener('pointerdown',fade);h10.addEventListener('pointerdown',fade);
+m10.addEventListener('pointerdown',()=>m10.classList.add('gone'));
 $('#tc').addEventListener('click',()=>{
   const b=$('#tc');if(b.dataset.busy)return;b.dataset.busy=1;b.classList.add('pressed');
   end=Math.round(val);
@@ -98,10 +97,31 @@ $('#tc').addEventListener('click',()=>{
 
 const words={18:'the sixth hour of the evening',19:'the seventh hour of the evening',20:'the eighth hour of the evening',21:'the ninth hour of the night',22:'the tenth hour of the night',23:'the eleventh hour of the night',24:'the stroke of midnight'};
 const nums={8:'eight',9:'nine',10:'ten',11:'eleven',12:'twelve',13:'thirteen',14:'fourteen'};
-hooks.letter=()=>{$('#endw').textContent=words[end];$('#durw').textContent=nums[end-10]};
+hooks.letter=()=>{
+  $('#endw').textContent=words[end];$('#durw').textContent=nums[end-10];
+  const chars=[],times=[];let t=0;
+  document.querySelectorAll('#letter .l').forEach(p=>{
+    const w=document.createTreeWalker(p,NodeFilter.SHOW_TEXT),nodes=[];
+    while(w.nextNode())nodes.push(w.currentNode);
+    nodes.forEach(n=>{
+      const f=document.createDocumentFragment();
+      for(const c of n.nodeValue){
+        if(c===' '){f.appendChild(document.createTextNode(' '));t+=22}
+        else{const s=document.createElement('span');s.className='ch';s.textContent=c;f.appendChild(s);chars.push(s);times.push(t);t+=22}
+      }
+      n.parentNode.replaceChild(f,n);
+    });
+    t+=320;
+  });
+  const seal=$('.seal'),start=performance.now()+800;let i=0;
+  (function tick(now){
+    while(i<chars.length&&now-start>=times[i]){chars[i].classList.add('on');i++}
+    if(i<chars.length)requestAnimationFrame(tick);else setTimeout(()=>seal.classList.add('on'),400);
+  })(performance.now());
+};
 
 const rows=[...document.querySelectorAll('#list li')];
-function reveal(i){const r=rows[i];if(!r)return;r.classList.add('show');requestAnimationFrame(()=>requestAnimationFrame(()=>r.classList.add('in')))}
+function reveal(i){const r=rows[i];if(r)requestAnimationFrame(()=>r.classList.add('in'))}
 hooks.check=()=>reveal(0);
 rows.forEach((r,i)=>r.addEventListener('click',()=>{
   if(r.classList.contains('done'))return;r.classList.add('done');
