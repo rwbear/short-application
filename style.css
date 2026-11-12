@@ -1,7 +1,7 @@
 :root{--ease:cubic-bezier(.22,1,.36,1);--bg:#0a0a0a;--line:rgba(255,255,255,.12)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:var(--bg);color:#fff;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
-#stage{position:relative;height:100dvh;width:100%}
+html,body{height:100%;background:var(--bg);color:#fff;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden;touch-action:manipulation}
+#stage{position:relative;height:100vh;height:100dvh;width:100%}
 .screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px 24px 90px;opacity:0;transform:translateY(14px) scale(.985);filter:blur(8px);pointer-events:none;transition:opacity .6s var(--ease),transform .6s var(--ease),filter .6s var(--ease)}
 .screen.active{opacity:1;transform:none;filter:none;pointer-events:auto}
 .wrap{width:100%;max-width:520px}
@@ -13,7 +13,7 @@ button{font-family:inherit;font-size:16px;height:52px;border-radius:8px;cursor:p
 .yes{background:#fff;color:#000;border:1px solid #fff;font-weight:500}
 .yes:active,.yes.pressed{transform:scale(.97)}
 .no{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.55);font-weight:300}
-.no.gone{display:none}
+.no.gone{visibility:hidden}
 #progress{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(520px,calc(100% - 48px));opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
 #progress.on{opacity:1}
 .pl{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:10px;font-variant-numeric:tabular-nums}
@@ -55,6 +55,7 @@ button{font-family:inherit;font-size:16px;height:52px;border-radius:8px;cursor:p
 .tf{position:absolute;left:12.5%;top:20px;height:2px;background:#fff;width:87.5%;transition:width .25s var(--ease)}
 .mark{position:absolute;top:10px;width:4px;height:22px;margin-left:-2px;background:#fff;border-radius:2px}
 .mark.fixed{left:12.5%}
+.mark.fixed::before{content:'';position:absolute;inset:-14px -18px}
 .mark.drag{left:100%;touch-action:none;cursor:grab}
 .mark.drag::before{content:'';position:absolute;inset:-14px -20px}
 .mark.drag::after{content:'';position:absolute;left:-8px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 0 0 6px rgba(255,255,255,.12);transition:transform .3s var(--ease)}
