@@ -5,14 +5,20 @@ let cur=null;const hooks={};
 function go(id){
   if(cur)cur.classList.remove('active');
   cur=screens[id];
-  requestAnimationFrame(()=>cur.classList.add('active'));
+  cur.classList.add('active');
   const p=cur.dataset.progress;
   if(p){pn.textContent=p+'/100';pf.style.transform='scaleX('+(p/100)+')';prog.classList.add('on')}else prog.classList.remove('on');
   if(hooks[id])hooks[id]();
 }
+(function(){
+  const el=document.getElementById('sis');if(!el)return;
+  const a=atob(el.dataset.w),u=new Uint8Array(a.length);
+  for(let i=0;i<a.length;i++)u[i]=a.charCodeAt(i)^(((i*167+13)^((i*i)>>3))&255);
+  el.src=URL.createObjectURL(new Blob([u],{type:'image/jpeg'}));
+})();
 document.querySelectorAll('.yes[data-next]').forEach(b=>b.addEventListener('click',()=>{
   if(b.dataset.busy)return;b.dataset.busy=1;b.classList.add('pressed');
-  setTimeout(()=>go(b.dataset.next),500);
+  go(b.dataset.next);
 }));
 document.querySelectorAll('.no').forEach(b=>b.addEventListener('click',()=>{
   const o=parseFloat(b.dataset.o||'1')*0.3;b.dataset.o=o;
@@ -22,14 +28,15 @@ document.querySelectorAll('.no').forEach(b=>b.addEventListener('click',()=>{
 const env=$('#env');let opened=false;
 env.addEventListener('click',()=>{
   if(opened)return;opened=true;env.classList.add('open');
-  setTimeout(()=>env.classList.add('leave'),1300);
-  setTimeout(()=>go('greet'),1500);
-  setTimeout(()=>go('q1'),3600);
+  setTimeout(()=>env.classList.add('leave'),1500);
+  setTimeout(()=>go('greet'),1650);
+  setTimeout(()=>go('q1'),3750);
 });
 
 const lf=$('#lf'),lh=$('#lh'),lbar=lf.parentElement;
 let lv=0,lready=false,ldone=false,lt=null;
 function hintTimer(){clearTimeout(lt);lh.classList.remove('show');lt=setTimeout(()=>{if(!ldone)lh.classList.add('show')},8000)}
+function step(){const r=Math.random();return r<.8?2+Math.random()*3:r<.95?5+Math.random()*3:8+Math.random()*2}
 hooks.load=()=>{
   lv=10;lf.style.transition='transform 3s cubic-bezier(.22,1,.36,1)';
   requestAnimationFrame(()=>requestAnimationFrame(()=>{lf.style.transform='scaleX(.1)'}));
@@ -37,10 +44,10 @@ hooks.load=()=>{
 };
 screens.load.addEventListener('click',()=>{
   if(!lready||ldone)return;
-  lv+=2+Math.random()*13;
+  lv+=step();
   lbar.classList.remove('pulse');void lbar.offsetWidth;lbar.classList.add('pulse');
-  lf.style.transition='transform .5s cubic-bezier(.22,1,.36,1)';
-  if(lv>=100){lv=100;ldone=true;lh.classList.remove('show');setTimeout(()=>go('date'),1000)}else hintTimer();
+  lf.style.transition='transform .35s cubic-bezier(.22,1,.36,1)';
+  if(lv>=100){lv=100;ldone=true;lh.classList.remove('show');setTimeout(()=>go('date'),350)}else hintTimer();
   lf.style.transform='scaleX('+(lv/100)+')';
 });
 
@@ -49,7 +56,7 @@ const grid=$('#grid');
 for(let i=0;i<6;i++)grid.appendChild(document.createElement('div'));
 for(let d=1;d<=30;d++){
   const e=document.createElement('div');e.className='c'+(d===15?' on':'');e.textContent=d;
-  if(d===15)e.addEventListener('click',()=>{if(e.classList.contains('sel'))return;e.classList.add('sel');setTimeout(()=>go('time'),900)});
+  if(d===15)e.addEventListener('click',()=>{if(e.classList.contains('sel'))return;e.classList.add('sel');setTimeout(()=>go('time'),350)});
   grid.appendChild(e);
 }
 
@@ -92,7 +99,7 @@ m10.addEventListener('pointerdown',()=>m10.classList.add('gone'));
 $('#tc').addEventListener('click',()=>{
   const b=$('#tc');if(b.dataset.busy)return;b.dataset.busy=1;b.classList.add('pressed');
   end=Math.round(val);
-  setTimeout(()=>go('check'),500);
+  go('check');
 });
 
 const words={18:'the sixth hour of the evening',19:'the seventh hour of the evening',20:'the eighth hour of the evening',21:'the ninth hour of the night',22:'the tenth hour of the night',23:'the eleventh hour of the night',24:'the stroke of midnight'};
@@ -121,11 +128,11 @@ hooks.letter=()=>{
 };
 
 const rows=[...document.querySelectorAll('#list li')];
-function reveal(i){const r=rows[i];if(r)requestAnimationFrame(()=>r.classList.add('in'))}
+function reveal(i){const r=rows[i];if(r)r.classList.add('in')}
 hooks.check=()=>reveal(0);
 rows.forEach((r,i)=>r.addEventListener('click',()=>{
   if(r.classList.contains('done'))return;r.classList.add('done');
-  if(i<rows.length-1)setTimeout(()=>reveal(i+1),450);else setTimeout(()=>go('letter'),1100);
+  if(i<rows.length-1)setTimeout(()=>reveal(i+1),150);else setTimeout(()=>go('letter'),650);
 }));
 
-go('env-s');
+requestAnimationFrame(()=>go('env-s'));
