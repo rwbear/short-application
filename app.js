@@ -7,12 +7,12 @@ function go(id){
   cur=screens[id];
   requestAnimationFrame(()=>cur.classList.add('active'));
   const p=cur.dataset.progress;
-  if(p){pn.textContent=p+'/100';pf.style.width=p+'%';prog.classList.add('on')}else prog.classList.remove('on');
+  if(p){pn.textContent=p+'/100';pf.style.transform='scaleX('+(p/100)+')';prog.classList.add('on')}else prog.classList.remove('on');
   if(hooks[id])hooks[id]();
 }
 document.querySelectorAll('.yes[data-next]').forEach(b=>b.addEventListener('click',()=>{
   if(b.dataset.busy)return;b.dataset.busy=1;b.classList.add('pressed');
-  setTimeout(()=>go(b.dataset.next),520);
+  setTimeout(()=>go(b.dataset.next),500);
 }));
 document.querySelectorAll('.no').forEach(b=>b.addEventListener('click',()=>{
   const o=parseFloat(b.dataset.o||'1')*0.3;b.dataset.o=o;
@@ -26,23 +26,22 @@ env.addEventListener('click',()=>{
   setTimeout(()=>go('greet'),2500);
   setTimeout(()=>go('q1'),4700);
 });
-hooks.greet=()=>{};
 
 const lf=$('#lf'),lh=$('#lh'),lbar=lf.parentElement;
 let lv=0,lready=false,ldone=false,lt=null;
 function hintTimer(){clearTimeout(lt);lh.classList.remove('show');lt=setTimeout(()=>{if(!ldone)lh.classList.add('show')},8000)}
 hooks.load=()=>{
-  lv=10;lf.style.transition='width 3s cubic-bezier(.22,1,.36,1)';
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{lf.style.width='10%'}));
+  lv=10;lf.style.transition='transform 3s cubic-bezier(.22,1,.36,1)';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{lf.style.transform='scaleX(.1)'}));
   setTimeout(()=>{lready=true;hintTimer()},3000);
 };
 screens.load.addEventListener('click',()=>{
   if(!lready||ldone)return;
   lv+=2+Math.random()*13;
   lbar.classList.remove('pulse');void lbar.offsetWidth;lbar.classList.add('pulse');
-  lf.style.transition='width .5s cubic-bezier(.22,1,.36,1)';
+  lf.style.transition='transform .5s cubic-bezier(.22,1,.36,1)';
   if(lv>=100){lv=100;ldone=true;lh.classList.remove('show');setTimeout(()=>go('date'),1000)}else hintTimer();
-  lf.style.width=lv+'%';
+  lf.style.transform='scaleX('+(lv/100)+')';
 });
 
 const grid=$('#grid');
@@ -55,32 +54,45 @@ for(let d=1;d<=30;d++){
 }
 
 const MIN=8,SPAN=16,line=$('#line'),m24=$('#m24'),tf=$('#tf'),tl=$('#tl'),h10=$('#h10'),ticks=$('#ticks');
-let end=24,drag=false;
+let end=24,val=24,drag=false,W=0,raf=0,rect=null;
+const frag=document.createDocumentFragment();
 for(let h=8;h<=24;h++){
   const l=(h-MIN)/SPAN*100;
-  const s=document.createElement('span');s.style.left=l+'%';ticks.appendChild(s);
-  if(h%2===0||h===10){const t=document.createElement('em');t.style.left=l+'%';t.textContent=h;ticks.appendChild(t)}
+  const s=document.createElement('span');s.style.left=l+'%';frag.appendChild(s);
+  if(h%2===0||h===10){const t=document.createElement('em');t.style.left=l+'%';t.textContent=h;frag.appendChild(t)}
 }
-function setEnd(h){
-  end=h;const p=(h-MIN)/SPAN*100;
-  m24.style.left=p+'%';tf.style.width=(p-12.5)+'%';
-  tl.textContent='10:00 – '+h+':00 · '+(h-10)+' hours';
+ticks.appendChild(frag);
+function measure(){W=line.offsetWidth}
+function render(){
+  raf=0;
+  m24.style.transform='translate3d('+((val-MIN)/SPAN*W-12)+'px,0,0)';
+  tf.style.transform='scaleX('+((val-10)/14)+')';
+  const h=Math.round(val);
+  tl.textContent='10:00 \u2013 '+h+':00 \u00b7 '+(h-10)+' hours';
 }
-setEnd(24);
-m24.classList.add('snap');
-m24.addEventListener('pointerdown',e=>{drag=true;m24.setPointerCapture(e.pointerId);m24.classList.add('active')});
-m24.addEventListener('pointermove',e=>{
-  if(!drag)return;const r=line.getBoundingClientRect();
-  let h=Math.round(MIN+(e.clientX-r.left)/r.width*SPAN);
-  h=Math.max(18,Math.min(24,h));if(h!==end)setEnd(h);
+function queue(){if(!raf)raf=requestAnimationFrame(render)}
+measure();render();
+hooks.time=()=>{measure();render()};
+window.addEventListener('resize',()=>{measure();render()});
+m24.addEventListener('pointerdown',e=>{
+  drag=true;line.classList.remove('snap');measure();rect=line.getBoundingClientRect();
+  m24.setPointerCapture(e.pointerId);m24.classList.add('active');
 });
-const up=()=>{drag=false;m24.classList.remove('active')};
-m24.addEventListener('pointerup',up);m24.addEventListener('pointercancel',up);
+m24.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  val=Math.max(18,Math.min(24,MIN+(e.clientX-rect.left)/rect.width*SPAN));
+  queue();
+});
+function release(){
+  if(!drag)return;drag=false;m24.classList.remove('active');
+  end=Math.round(val);val=end;line.classList.add('snap');queue();
+}
+m24.addEventListener('pointerup',release);m24.addEventListener('pointercancel',release);
 const fade=()=>h10.classList.add('gone');
 $('#m10').addEventListener('pointerdown',fade);h10.addEventListener('pointerdown',fade);
-$('#m10').style.cursor='pointer';
 $('#tc').addEventListener('click',()=>{
   const b=$('#tc');if(b.dataset.busy)return;b.dataset.busy=1;b.classList.add('pressed');
+  end=Math.round(val);
   setTimeout(()=>go('check'),500);
 });
 
