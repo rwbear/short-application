@@ -2,14 +2,19 @@ const $=s=>document.querySelector(s);
 const screens={};document.querySelectorAll('.screen').forEach(s=>screens[s.id]=s);
 const prog=$('#progress'),pn=$('#pn'),pf=$('#pf');
 let cur=null;const hooks={};
-function go(id){
-  const prev=cur;
-  if(prev){prev.classList.remove('active');prev.classList.add('out');setTimeout(()=>prev.classList.remove('out'),500)}
-  cur=screens[id];cur.classList.remove('out');cur.classList.add('active');
-  const p=cur.dataset.progress;
+function leave(el,instant){
+  if(!el)return;
+  if(instant){el.style.transition='none';el.classList.remove('active');requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.transition=''}));return}
+  el.classList.remove('active');el.classList.add('out');
+  setTimeout(()=>el.classList.remove('out'),550);
+}
+function enter(id){
+  const el=screens[id];el.classList.remove('out');el.classList.add('active');
+  const p=el.dataset.progress;
   if(p){pn.textContent=p+'/100';pf.style.transform='scaleX('+(p/100)+')';prog.classList.add('on')}else prog.classList.remove('on');
   if(hooks[id])hooks[id]();
 }
+function go(id){leave(cur);cur=screens[id];enter(id)}
 (function(){
   const el=document.getElementById('sis');if(!el)return;
   const a=atob(el.dataset.w),u=new Uint8Array(a.length);
@@ -26,10 +31,15 @@ document.querySelectorAll('.no').forEach(b=>b.addEventListener('click',()=>{
 }));
 
 const env=$('#env');let opened=false;
+(function(){const f=env.querySelector('.flap'),f2=f.cloneNode(true);f2.setAttribute('class','flap2');env.appendChild(f2)})();
 env.addEventListener('click',()=>{
   if(opened)return;opened=true;env.classList.add('open');
-  setTimeout(()=>go('greet'),1300);
-  setTimeout(()=>go('q1'),3700);
+  let left=false;
+  const done=()=>{if(left)return;left=true;leave(screens['env-s'],true)};
+  env.addEventListener('animationend',e=>{if(e.target===env&&e.animationName==='envOut')done()});
+  setTimeout(done,3200);
+  setTimeout(()=>{cur=screens.greet;enter('greet')},2050);
+  setTimeout(()=>go('q1'),4350);
 });
 
 const lf=$('#lf'),lh=$('#lh'),lbar=lf.parentElement;
@@ -37,7 +47,7 @@ let lv=0,lready=false,ldone=false,lt=null;
 function hintTimer(){clearTimeout(lt);lh.classList.remove('show');lt=setTimeout(()=>{if(!ldone)lh.classList.add('show')},8000)}
 function step(){const r=Math.random();return r<.8?2+Math.random()*3:r<.95?5+Math.random()*3:8+Math.random()*2}
 hooks.load=()=>{
-  lv=10;lf.style.transition='transform 3s cubic-bezier(.22,1,.36,1)';
+  lv=10;lf.style.transition='transform 3s cubic-bezier(.25,.8,.25,1)';
   requestAnimationFrame(()=>requestAnimationFrame(()=>{lf.style.transform='scaleX(.1)'}));
   setTimeout(()=>{lready=true;hintTimer()},3000);
 };
@@ -45,7 +55,7 @@ screens.load.addEventListener('click',()=>{
   if(!lready||ldone)return;
   lv+=step();
   lbar.classList.remove('pulse');void lbar.offsetWidth;lbar.classList.add('pulse');
-  lf.style.transition='transform .5s cubic-bezier(.22,1,.36,1)';
+  lf.style.transition='transform .5s cubic-bezier(.25,.8,.25,1)';
   if(lv>=100){lv=100;ldone=true;lh.classList.remove('show');setTimeout(()=>go('date'),450)}else hintTimer();
   lf.style.transform='scaleX('+(lv/100)+')';
 });
@@ -101,10 +111,9 @@ $('#tc').addEventListener('click',()=>{
   go('check');
 });
 
-const words={18:'the sixth hour of the evening',19:'the seventh hour of the evening',20:'the eighth hour of the evening',21:'the ninth hour of the night',22:'the tenth hour of the night',23:'the eleventh hour of the night',24:'the stroke of midnight'};
 hooks.letter=()=>{
   const ps=document.querySelectorAll('#letter .l');
-  ps[2].textContent='Let the hours be spent in laughter, fair conversation and the sweetest of rest, from the tenth hour of the morning until '+words[end]+'. Time well spent in good company is never counted.';
+  ps[2].textContent='Thou art one who loveth the open air, a quiet hour of rest and kind company, and so a day hath been prepared with all three in it.';
   ps[4].textContent='Thy place is kept and thy coming is awaited. Given by our own hands, with great anticipation.';
   const sl=$('.seal');if(sl)sl.remove();
   const chars=[],times=[];let t=0;
@@ -121,7 +130,7 @@ hooks.letter=()=>{
     });
     t+=300;
   });
-  const start=performance.now()+900;let i=0;
+  const start=performance.now()+1000;let i=0;
   (function tick(now){
     while(i<chars.length&&now-start>=times[i]){chars[i].classList.add('on');i++}
     if(i<chars.length)requestAnimationFrame(tick);
@@ -136,4 +145,4 @@ rows.forEach((r,i)=>r.addEventListener('click',()=>{
   if(i<rows.length-1)setTimeout(()=>reveal(i+1),250);else setTimeout(()=>go('letter'),800);
 }));
 
-requestAnimationFrame(()=>go('env-s'));
+requestAnimationFrame(()=>{cur=screens['env-s'];enter('env-s')});
