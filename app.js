@@ -3,9 +3,9 @@ const screens={};document.querySelectorAll('.screen').forEach(s=>screens[s.id]=s
 const prog=$('#progress'),pn=$('#pn'),pf=$('#pf');
 let cur=null;const hooks={};
 function go(id){
-  if(cur)cur.classList.remove('active');
-  cur=screens[id];
-  cur.classList.add('active');
+  const prev=cur;
+  if(prev){prev.classList.remove('active');prev.classList.add('out');setTimeout(()=>prev.classList.remove('out'),500)}
+  cur=screens[id];cur.classList.remove('out');cur.classList.add('active');
   const p=cur.dataset.progress;
   if(p){pn.textContent=p+'/100';pf.style.transform='scaleX('+(p/100)+')';prog.classList.add('on')}else prog.classList.remove('on');
   if(hooks[id])hooks[id]();
@@ -22,15 +22,14 @@ document.querySelectorAll('.yes[data-next]').forEach(b=>b.addEventListener('clic
 }));
 document.querySelectorAll('.no').forEach(b=>b.addEventListener('click',()=>{
   const o=parseFloat(b.dataset.o||'1')*0.3;b.dataset.o=o;
-  if(o<0.03){b.style.opacity=0;b.style.pointerEvents='none';setTimeout(()=>b.classList.add('gone'),500)}else b.style.opacity=o;
+  if(o<0.03){b.style.opacity=0;b.style.pointerEvents='none';setTimeout(()=>b.classList.add('gone'),600)}else b.style.opacity=o;
 }));
 
 const env=$('#env');let opened=false;
 env.addEventListener('click',()=>{
   if(opened)return;opened=true;env.classList.add('open');
-  setTimeout(()=>env.classList.add('leave'),1500);
-  setTimeout(()=>go('greet'),1650);
-  setTimeout(()=>go('q1'),3750);
+  setTimeout(()=>go('greet'),1300);
+  setTimeout(()=>go('q1'),3700);
 });
 
 const lf=$('#lf'),lh=$('#lh'),lbar=lf.parentElement;
@@ -46,8 +45,8 @@ screens.load.addEventListener('click',()=>{
   if(!lready||ldone)return;
   lv+=step();
   lbar.classList.remove('pulse');void lbar.offsetWidth;lbar.classList.add('pulse');
-  lf.style.transition='transform .35s cubic-bezier(.22,1,.36,1)';
-  if(lv>=100){lv=100;ldone=true;lh.classList.remove('show');setTimeout(()=>go('date'),350)}else hintTimer();
+  lf.style.transition='transform .5s cubic-bezier(.22,1,.36,1)';
+  if(lv>=100){lv=100;ldone=true;lh.classList.remove('show');setTimeout(()=>go('date'),450)}else hintTimer();
   lf.style.transform='scaleX('+(lv/100)+')';
 });
 
@@ -56,7 +55,7 @@ const grid=$('#grid');
 for(let i=0;i<6;i++)grid.appendChild(document.createElement('div'));
 for(let d=1;d<=30;d++){
   const e=document.createElement('div');e.className='c'+(d===15?' on':'');e.textContent=d;
-  if(d===15)e.addEventListener('click',()=>{if(e.classList.contains('sel'))return;e.classList.add('sel');setTimeout(()=>go('time'),350)});
+  if(d===15)e.addEventListener('click',()=>{if(e.classList.contains('sel'))return;e.classList.add('sel');setTimeout(()=>go('time'),450)});
   grid.appendChild(e);
 }
 
@@ -103,27 +102,29 @@ $('#tc').addEventListener('click',()=>{
 });
 
 const words={18:'the sixth hour of the evening',19:'the seventh hour of the evening',20:'the eighth hour of the evening',21:'the ninth hour of the night',22:'the tenth hour of the night',23:'the eleventh hour of the night',24:'the stroke of midnight'};
-const nums={8:'eight',9:'nine',10:'ten',11:'eleven',12:'twelve',13:'thirteen',14:'fourteen'};
 hooks.letter=()=>{
-  $('#endw').textContent=words[end];$('#durw').textContent=nums[end-10];
+  const ps=document.querySelectorAll('#letter .l');
+  ps[2].textContent='Let the hours be spent in laughter, fair conversation and the sweetest of rest, from the tenth hour of the morning until '+words[end]+'. Time well spent in good company is never counted.';
+  ps[4].textContent='Thy place is kept and thy coming is awaited. Given by our own hands, with great anticipation.';
+  const sl=$('.seal');if(sl)sl.remove();
   const chars=[],times=[];let t=0;
-  document.querySelectorAll('#letter .l').forEach(p=>{
+  ps.forEach(p=>{
     const w=document.createTreeWalker(p,NodeFilter.SHOW_TEXT),nodes=[];
     while(w.nextNode())nodes.push(w.currentNode);
     nodes.forEach(n=>{
       const f=document.createDocumentFragment();
       for(const c of n.nodeValue){
-        if(c===' '){f.appendChild(document.createTextNode(' '));t+=22}
-        else{const s=document.createElement('span');s.className='ch';s.textContent=c;f.appendChild(s);chars.push(s);times.push(t);t+=22}
+        if(c===' '){f.appendChild(document.createTextNode(' '));t+=20}
+        else{const s=document.createElement('span');s.className='ch';s.textContent=c;f.appendChild(s);chars.push(s);times.push(t);t+=20}
       }
       n.parentNode.replaceChild(f,n);
     });
-    t+=320;
+    t+=300;
   });
-  const seal=$('.seal'),start=performance.now()+800;let i=0;
+  const start=performance.now()+900;let i=0;
   (function tick(now){
     while(i<chars.length&&now-start>=times[i]){chars[i].classList.add('on');i++}
-    if(i<chars.length)requestAnimationFrame(tick);else setTimeout(()=>seal.classList.add('on'),400);
+    if(i<chars.length)requestAnimationFrame(tick);
   })(performance.now());
 };
 
@@ -132,7 +133,7 @@ function reveal(i){const r=rows[i];if(r)r.classList.add('in')}
 hooks.check=()=>reveal(0);
 rows.forEach((r,i)=>r.addEventListener('click',()=>{
   if(r.classList.contains('done'))return;r.classList.add('done');
-  if(i<rows.length-1)setTimeout(()=>reveal(i+1),150);else setTimeout(()=>go('letter'),650);
+  if(i<rows.length-1)setTimeout(()=>reveal(i+1),250);else setTimeout(()=>go('letter'),800);
 }));
 
 requestAnimationFrame(()=>go('env-s'));
